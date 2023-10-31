@@ -68,6 +68,48 @@ fn Home() -> impl IntoView {
         move |_| get_users(),
     );
 
+    let existing_users = move || users.get()
+        .map( |users| {
+            match users {
+                Err(e) => {
+                    ( view! { <pre class="error">"Server Error: " {e.to_string()}</pre> } ).into_view()
+                },
+                Ok(users) => {
+                    if users.is_empty() {
+                        ( view! { <p>"No users were found."</p> } ).into_view()
+                    } else {
+                        users
+                            .into_iter()
+                            .map( |user| {
+                                view! {
+                                    <li>
+                                        {user.pseudo}
+                                        <ActionForm action=delete_user>
+                                            <input type="hidden" name="id" value={user.id}/>
+                                            <input type="submit" value="X"/>
+                                        </ActionForm>
+                                    </li>
+                                }
+                            })
+                            .collect_view()
+                    }
+                }
+            }
+        })
+        .unwrap_or_default();
+
+
+    let pending_users = move || submissions
+        .get()
+        .into_iter()
+        .filter(|submission| submission.pending().get())
+        .map(|submission| {
+            view! {
+                <li class="pending">{ submission.input.get().map(|data| data.pseudo) }</li>
+            }
+        })
+        .collect_view();
+
     view! {
         <div>
             <MultiActionForm action=add_user>
@@ -77,63 +119,11 @@ fn Home() -> impl IntoView {
                 </label>
                 <input type="submit" value="Add"/>
             </MultiActionForm>
-            <Transition fallback=move || view! {<p>"Loading..."</p> }>
-                {move || {
-                    let existing_users = {
-                        move || {
-                            users.get()
-                                .map(move |users| match users {
-                                    Err(e) => {
-                                        view! { <pre class="error">"Server Error: " {e.to_string()}</pre>}.into_view()
-                                    }
-                                    Ok(users) => {
-                                        if users.is_empty() {
-                                            view! { <p>"No users were found."</p> }.into_view()
-                                        } else {
-                                            users
-                                                .into_iter()
-                                                .map(move |user| {
-                                                    view! {
-
-                                                        <li>
-                                                            {user.pseudo}
-                                                            <ActionForm action=delete_user>
-                                                                <input type="hidden" name="id" value={user.id}/>
-                                                                <input type="submit" value="X"/>
-                                                            </ActionForm>
-                                                        </li>
-                                                    }
-                                                })
-                                                .collect_view()
-                                        }
-                                    }
-                                })
-                                .unwrap_or_default()
-                        }
-                    };
-
-                    let pending_users = move || {
-                        submissions
-                            .get()
-                            .into_iter()
-                            .filter(|submission| submission.pending().get())
-                            .map(|submission| {
-                                view! {
-
-                                    <li class="pending">{move || submission.input.get().map(|data| data.pseudo) }</li>
-                                }
-                            })
-                            .collect_view()
-                    };
-
-                    view! {
-                        <ul>
-                            {existing_users}
-                            {pending_users}
-                        </ul>
-                    }
-                }
-            }
+            <Transition fallback= || view! { <p>"Loading..."</p> }>
+                <ul>
+                    {existing_users}
+                    {pending_users}
+                </ul>
             </Transition>
         </div>
     }

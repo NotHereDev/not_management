@@ -32,7 +32,7 @@ cargo install diesel_cli --no-default-features --features [postgres|sqlite|mysql
 or if you have binstall installed (avoid building from source) [not recommended]
 
 ```bash
-cargo binstall diesel_cli --no-default-features
+cargo binstall diesel_cli
 ```
 
 > diesel_cli can require lib like libpq-dev, libmysqlclient-dev, libsqlite3-dev

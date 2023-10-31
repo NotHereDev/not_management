@@ -27,8 +27,10 @@ actix-files = { version = "0.6", optional = true }
 actix-web = { version = "4.4", features = ["macros"], optional = true }
 futures = { version = "0.3", optional = true }
 simple_logger = { version = "4.2", optional = true }
-diesel = { version = "2.1", features = ["sqlite"], optional = true }
+diesel = { version = "2.1", features = ["sqlite", "r2d2"], optional = true }
 dotenvy = { version = "0.15", optional = true }
+r2d2 = { version = "0.8", optional = true }
+once_cell = { version = "1.18", optional = true }
 
 [features]
 default = ["csr"]
@@ -59,6 +61,8 @@ ssr = [
     "dep:simple_logger",
     "dep:diesel",
     "dep:dotenvy",
+    "dep:r2d2",
+    "dep:once_cell",
 ]
 
 [package.metadata.cargo-all-features]

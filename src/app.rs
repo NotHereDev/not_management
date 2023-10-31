@@ -28,12 +28,24 @@ pub async fn get_users() -> Result<Vec<crate::models::User>, ServerFnError> {
     Ok(users)
 }
 
+#[server]
+pub async fn delete_user(
+    id: i32,
+) -> Result<(), ServerFnError> {
+    let mut conn = crate::models::get_connection()
+        .map_err(ServerFnError::ServerError)?;
+
+    crate::models::User::delete(&mut conn, id)
+        .map_err(|e| ServerFnError::ServerError(e.to_string()))?;
+
+    Ok(())
+}
+
 #[component]
 pub fn App() -> impl IntoView {
     provide_meta_context();
 
     view! {
-
         <Stylesheet id="leptos" href="/pkg/not_management.css"/>
         <Link rel="shortcut icon" type_="image/ico" href="/favicon.ico"/>
         <Router>
@@ -46,34 +58,96 @@ pub fn App() -> impl IntoView {
 
 #[component]
 fn Home() -> impl IntoView {
-    let (count, set_count) = create_signal(0);
     let add_user = create_server_multi_action::<AddUser>();
+    let delete_user = create_server_action::<DeleteUser>();
+    let submissions = add_user.submissions();
+
+    // list of users is loaded from the server in reaction to changes
+    let users = create_resource(
+        move || (add_user.version().get(), delete_user.version().get()),
+        move |_| get_users(),
+    );
 
     view! {
-        <main class="my-0 mx-auto max-w-3xl text-center">
-            <h2 class="p-6 text-4xl">"Welcome to Leptos with Tailwind"</h2>
-            <p class="px-10 pb-10 text-left">"Tailwind will scan your Rust files for Tailwind class names and compile them into a CSS file."</p>
-            <button
-                class="bg-amber-600 hover:bg-sky-700 px-5 py-3 text-white rounded-lg"
-                on:click=move |_| set_count.update(|count| *count += 1)
-            >
-                "Something's here | "
-                {move || if count() == 0 {
-                    "Click me!".to_string()
-                } else {
-                    count().to_string()
-                }}
-                " | Some more text"
-            </button>
+        <div>
             <MultiActionForm
+                // we can handle client-side validation in the on:submit event
+                // leptos_router implements a `FromFormData` trait that lets you
+                // parse deserializable types from form data and check them
+                on:submit=move |ev| {
+                    let data = AddUser::from_event(&ev).expect("to parse form data");
+                    // silly example of validation: if the user is "nope!", nope it
+                    if data.pseudo == "nope!" {
+                        // ev.prevent_default() will prevent form submission
+                        ev.prevent_default();
+                    }
+                }
                 action=add_user
             >
                 <label>
-                    "Add User"
+                    "Add a User"
                     <input type="text" name="pseudo"/>
                 </label>
                 <input type="submit" value="Add"/>
             </MultiActionForm>
-        </main>
+            <Transition fallback=move || view! {<p>"Loading..."</p> }>
+                {move || {
+                    let existing_users = {
+                        move || {
+                            users.get()
+                                .map(move |users| match users {
+                                    Err(e) => {
+                                        view! { <pre class="error">"Server Error: " {e.to_string()}</pre>}.into_view()
+                                    }
+                                    Ok(users) => {
+                                        if users.is_empty() {
+                                            view! { <p>"No users were found."</p> }.into_view()
+                                        } else {
+                                            users
+                                                .into_iter()
+                                                .map(move |user| {
+                                                    view! {
+
+                                                        <li>
+                                                            {user.pseudo}
+                                                            <ActionForm action=delete_user>
+                                                                <input type="hidden" name="id" value={user.id}/>
+                                                                <input type="submit" value="X"/>
+                                                            </ActionForm>
+                                                        </li>
+                                                    }
+                                                })
+                                                .collect_view()
+                                        }
+                                    }
+                                })
+                                .unwrap_or_default()
+                        }
+                    };
+
+                    let pending_users = move || {
+                        submissions
+                            .get()
+                            .into_iter()
+                            .filter(|submission| submission.pending().get())
+                            .map(|submission| {
+                                view! {
+
+                                    <li class="pending">{move || submission.input.get().map(|data| data.pseudo) }</li>
+                                }
+                            })
+                            .collect_view()
+                    };
+
+                    view! {
+                        <ul>
+                            {existing_users}
+                            {pending_users}
+                        </ul>
+                    }
+                }
+            }
+            </Transition>
+        </div>
     }
 }

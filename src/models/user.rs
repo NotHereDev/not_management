@@ -7,8 +7,7 @@ use diesel::insert_into;
 
 use serde::{Deserialize, Serialize};
 
-
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = super::schema::users))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::sqlite::Sqlite)))]
@@ -24,6 +23,12 @@ impl User {
                 use crate::models::schema::users::dsl::*;
 
                 users.load(conn)
+            }
+
+            pub fn delete(conn: &mut SqliteConnection, user_id: i32) -> QueryResult<usize> {
+                use crate::models::schema::users::dsl::*;
+
+                diesel::delete(users.filter(id.eq(user_id))).execute(conn)
             }
         }
     }
@@ -47,5 +52,4 @@ impl UserForm {
             }
         }
     }
-
 }

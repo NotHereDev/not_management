@@ -8,7 +8,7 @@ pub fn App() -> impl IntoView {
 
     view! {
 
-        <Stylesheet id="leptos" href="/pkg/tailwind.scss"/>
+        <Stylesheet id="leptos" href="/pkg/not_management.css"/>
         <Link rel="shortcut icon" type_="image/ico" href="/favicon.ico"/>
         <Router>
             <Routes>

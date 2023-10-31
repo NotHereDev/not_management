@@ -17,6 +17,7 @@ gloo-net = { version = "0.4", features = ["http"] }
 log = "0.4"
 cfg-if = "1.0"
 serde = "1.0"
+serde_json = "1.0"
 
 # dependecies for client (enable when csr or hydrate set)
 wasm-bindgen = { version = "0.2", optional = true }

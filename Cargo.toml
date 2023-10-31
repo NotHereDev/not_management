@@ -70,9 +70,6 @@ denylist = [
 ]
 skip_feature_sets = [["csr", "ssr"], ["csr", "hydrate"], ["ssr", "hydrate"]]
 
-[profile.release]
-panic = "abort"
-
 [profile.wasm-release]
 inherits = "release"
 opt-level = 'z'

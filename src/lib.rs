@@ -1,4 +1,8 @@
 mod app;
+
+#[cfg(feature = "ssr")]
+mod models;
+
 use cfg_if::cfg_if;
 
 cfg_if! {

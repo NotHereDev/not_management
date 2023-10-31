@@ -2,6 +2,28 @@ use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 
+#[server]
+pub async fn save_user(
+    number: i32,
+) -> Result<String, ServerFnError> {
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "ssr")] {
+            let mut conn = crate::models::get_connection()
+                .map_err(ServerFnError::ServerError)?;
+
+            let user = crate::models::UserForm {
+                pseudo: format!("User {}", number),
+            };
+            user.insert(&mut conn)
+                .map_err(|e| ServerFnError::ServerError(e.to_string()))?;
+            Ok(format!("Here, {user_pseudo}!", user_pseudo = user.pseudo))
+        }
+        else {
+            Ok(format!("Here, {user_pseudo}!", user_pseudo = "user.pseudo"))
+        }
+    }
+}
+
 #[component]
 pub fn App() -> impl IntoView {
     provide_meta_context();
@@ -21,6 +43,7 @@ pub fn App() -> impl IntoView {
 #[component]
 fn Home() -> impl IntoView {
     let (count, set_count) = create_signal(0);
+    let (server, set_server) = create_signal("".to_string());
 
     view! {
         <main class="my-0 mx-auto max-w-3xl text-center">
@@ -28,7 +51,13 @@ fn Home() -> impl IntoView {
             <p class="px-10 pb-10 text-left">"Tailwind will scan your Rust files for Tailwind class names and compile them into a CSS file."</p>
             <button
                 class="bg-amber-600 hover:bg-sky-700 px-5 py-3 text-white rounded-lg"
-                on:click=move |_| set_count.update(|count| *count += 1)
+                on:click=move |_| {
+                    spawn_local(async move {
+                        let user_pseudo = save_user(count()).await.unwrap();
+                        set_count.update(|count| *count += 1);
+                        set_server.update(|server| *server = user_pseudo);
+                    });
+                }
             >
                 "Something's here | "
                 {move || if count() == 0 {
@@ -38,6 +67,7 @@ fn Home() -> impl IntoView {
                 }}
                 " | Some more text"
             </button>
+            <p class="px-10 pb-10 text-left">This is a server response: {server}</p>
         </main>
     }
 }

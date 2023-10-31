@@ -1,4 +1,6 @@
 mod app;
+
+#[cfg(feature = "ssr")]
 mod models;
 
 use cfg_if::cfg_if;
@@ -34,6 +36,8 @@ cfg_if! {
                 let routes = &routes;
                 App::new()
                     .service(css)
+                    // Add leptos server fn routes
+                    .route("/api/{tail:.*}", leptos_actix::handle_server_fns())
                     .leptos_routes(leptos_options.to_owned(), routes.to_owned(), || view! { <App/> })
                     .service(Files::new("/", site_root))
                     .wrap(middleware::Compress::default())

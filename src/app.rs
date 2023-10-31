@@ -6,22 +6,15 @@ use leptos_router::*;
 pub async fn save_user(
     number: i32,
 ) -> Result<String, ServerFnError> {
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "ssr")] {
-            let mut conn = crate::models::get_connection()
-                .map_err(ServerFnError::ServerError)?;
+    let mut conn = crate::models::get_connection()
+        .map_err(ServerFnError::ServerError)?;
 
-            let user = crate::models::UserForm {
-                pseudo: format!("User {}", number),
-            };
-            user.insert(&mut conn)
-                .map_err(|e| ServerFnError::ServerError(e.to_string()))?;
-            Ok(format!("Here, {user_pseudo}!", user_pseudo = user.pseudo))
-        }
-        else {
-            Ok(format!("Here, {user_pseudo}!", user_pseudo = "user.pseudo"))
-        }
-    }
+    let user = crate::models::UserForm {
+        pseudo: format!("User {}", number),
+    };
+    user.insert(&mut conn)
+        .map_err(|e| ServerFnError::ServerError(e.to_string()))?;
+    Ok(format!("Here, {user_pseudo}!", user_pseudo = user.pseudo))
 }
 
 #[component]

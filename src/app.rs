@@ -70,20 +70,7 @@ fn Home() -> impl IntoView {
 
     view! {
         <div>
-            <MultiActionForm
-                // we can handle client-side validation in the on:submit event
-                // leptos_router implements a `FromFormData` trait that lets you
-                // parse deserializable types from form data and check them
-                on:submit=move |ev| {
-                    let data = AddUser::from_event(&ev).expect("to parse form data");
-                    // silly example of validation: if the user is "nope!", nope it
-                    if data.pseudo == "nope!" {
-                        // ev.prevent_default() will prevent form submission
-                        ev.prevent_default();
-                    }
-                }
-                action=add_user
-            >
+            <MultiActionForm action=add_user>
                 <label>
                     "Add a User"
                     <input type="text" name="pseudo"/>

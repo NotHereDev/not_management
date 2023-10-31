@@ -9,11 +9,11 @@ crate-type = ["cdylib", "rlib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-leptos = { version = "0.5.2", features = ["nightly"] }
-leptos_actix = { version = "0.5.2", optional = true }
-leptos_meta = { version = "0.5.2", features = ["nightly"] }
-leptos_router = { version = "0.5.2", features = ["nightly"] }
-gloo-net = { version = "0.2", features = ["http"] }
+leptos = { version = "0.5", features = ["nightly"] }
+leptos_actix = { version = "0.5", optional = true }
+leptos_meta = { version = "0.5", features = ["nightly"] }
+leptos_router = { version = "0.5", features = ["nightly"] }
+gloo-net = { version = "0.4", features = ["http"] }
 log = "0.4"
 cfg-if = "1.0"
 
@@ -24,9 +24,9 @@ console_error_panic_hook = { version = "0.1", optional = true }
 
 # dependecies for server (enable when ssr set)
 actix-files = { version = "0.6", optional = true }
-actix-web = { version = "4", features = ["macros"], optional = true }
+actix-web = { version = "4.4", features = ["macros"], optional = true }
 futures = { version = "0.3", optional = true }
-simple_logger = { version = "4.0", optional = true }
+simple_logger = { version = "4.2", optional = true }
 
 [features]
 default = ["csr"]
@@ -70,10 +70,11 @@ denylist = [
 ]
 skip_feature_sets = [["csr", "ssr"], ["csr", "hydrate"], ["ssr", "hydrate"]]
 
-[profile.release]
-codegen-units = 1
-lto = true
+[profile.wasm-release]
+inherits = "release"
 opt-level = 'z'
+lto = true
+codegen-units = 1
 
 [package.metadata.leptos]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
@@ -121,3 +122,4 @@ lib-features = ["hydrate"]
 #
 # Optional. Defaults to false.
 lib-default-features = false
+lib-profile-release = "wasm-release"

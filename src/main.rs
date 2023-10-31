@@ -1,4 +1,6 @@
 mod app;
+mod models;
+
 use cfg_if::cfg_if;
 
 cfg_if! {

@@ -1,14 +1,20 @@
-use diesel::sqlite::SqliteConnection;
 use diesel::r2d2::ConnectionManager;
 use once_cell::sync::Lazy;
 use r2d2::{Pool, PooledConnection};
 
-pub type DbPool = Pool<ConnectionManager<SqliteConnection>>;
-pub type DbPooledConnection = PooledConnection<ConnectionManager<SqliteConnection>>;
+#[derive(diesel::MultiConnection)]
+pub enum AnyConnection {
+    Postgresql(diesel::PgConnection),
+    Mysql(diesel::MysqlConnection),
+    Sqlite(diesel::SqliteConnection),
+}
+
+pub type DbPool = Pool<ConnectionManager<AnyConnection>>;
+pub type DbPooledConnection = PooledConnection<ConnectionManager<AnyConnection>>;
 
 pub static DB: Lazy<DbPool> = Lazy::new(|| {
     let url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let manager = ConnectionManager::<SqliteConnection>::new(url);
+    let manager = ConnectionManager::<AnyConnection>::new(url);
 
     Pool::builder()
         .build(manager)
